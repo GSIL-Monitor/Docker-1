@@ -1,0 +1,12 @@
+version: '2'
+services:
+  privoxy:
+    container_name: privoxy
+    image: 10.1.23.99/library/privoxyv1.2:latest
+    environment:
+        - PROXY_PORT=3128
+    ports:
+      # main port
+      - "3128:3128"
+    restart: always
+    network_mode: "host"

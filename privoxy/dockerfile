@@ -1,0 +1,7 @@
+FROM centos:latest
+MAINTAINER leonjq@163.com
+RUN echo 'nameserver 202.96.209.5' >>/etc/resolv.conf
+RUN yum install -y epel-release && yum install -y privoxy
+ADD privoxy_cfg.conf /
+ADD entrypoint.sh /
+CMD ["./entrypoint.sh"]
