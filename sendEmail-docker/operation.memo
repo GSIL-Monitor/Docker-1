@@ -1,0 +1,55 @@
+为了增加docker镜像的编译速度，建议下载sendEmail-v1.56.tar.gz到本地。
+
+cat <<EOF | tee ~/zabbix-server-mysql-sendEmail/Dockerfile
+FROM zabbix/zabbix-server-mysql
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
+        apk add --no-cache perl-crypt-ssleay perl-io-socket-ssl ca-certificates tzdata && \
+        wget http://caspian.dotconf.net/menu/Software/SendEmail/sendEmail-v1.56.tar.gz -P /tmp/ && \
+        tar xzf /tmp/sendEmail-v1.56.tar.gz -C /tmp/ && \
+        rm -f /tmp/sendEmail-v1.56.tar.gz && \
+        sed -i "s/SSL_version => 'SSLv3 TLSv1'/SSL_version => 'TLSv1'/g" /tmp/sendEmail-v1.56/sendEmail && \
+        mv /tmp/sendEmail-v1.56/sendEmail /usr/bin && \
+        chmod +x /usr/bin/sendEmail && \
+        rm -rf /tmp/* && \
+        ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+        echo "Asia/Shanghai" > /etc/timezone 
+        EXPOSE 10051/TCP 162/UDP
+        WORKDIR /var/lib/zabbix
+        ENTRYPOINT ["/bin/bash"]
+        CMD ["/run_zabbix_component.sh", "server", "mysql"]
+EOF
+
+3. 构建镜像
+cd ~/zabbix-server-mysql-sendEmail
+docker build -t nero/zabbix-server-mysql:latest .
+
+4. 停止官方使用的镜像，启用新镜像
+docker rm -f zabbix-server #这里我之前启用镜像的时候使用的是别名
+docker run --name zabbix-server \
+--link zabbix-db:mysql-server \
+--restart=always \
+-e MYSQL_USER=zabbix \
+-e MYSQL_PASSWORD=zabbix \
+-e ZBX_IPMIPOLLERS=3 \
+-e ZBX_STARTVMWARECOLLECTORS=5 \
+-e ZBX_DEBUGLEVEL=3 \
+-v /home/nero/zabbix/externalscripts:/usr/lib/zabbix/externalscripts \
+-v /home/nero/zabbix/alertscripts:/usr/lib/zabbix/alertscripts \
+-p 10051:10051 \
+-d nero/zabbix-server-mysql
+
+
+调用脚本：
+#!/bin/bash
+echo "`date +"%F %T"` send to $to_email_address" >> /tmp/send.log
+docker exec -i sendemailsvr sh -c 'sendEmail -s "smtp.qiye.163.com:587"  \
+                                -xu helpdesk@xwf-id.com \
+                                -xp "Helpdesk"  \
+                                -f helpdesk@xwf-id.com  \
+                                -t "leon.li@xwf-id.com"  \
+                                -cc "leon@XXX.com" \
+                                -u "XXXX阿里云VPN链路故障"  \
+                                -m "TO_LANK_VPN_Line problem Happen,pls check it"  \
+                                -o tls=yes -v >> /tmp/send.log '
+echo $? >> /tmp/send.log
+echo >> /tmp/send.log
