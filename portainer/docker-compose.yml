@@ -1,0 +1,17 @@
+version: '2'
+
+services:
+  portainer:
+    container_name: portainer
+    hostname: portainer
+    image: 10.1.23.99/library/portainer:latest
+    command: -H unix:///var/run/docker.sock
+    restart: always
+    ports:
+      - 80:9000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+
+volumes:
+  portainer_data:
