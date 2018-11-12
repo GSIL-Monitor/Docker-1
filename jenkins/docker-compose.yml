@@ -1,0 +1,27 @@
+version: '2'
+services:
+  jenkins:
+    container_name: jenkins
+    image: 10.1.23.99/library/jenkins:2.140
+    environment:
+        - JAVA_OPTS=-Duser.timezone=Asia/Shanghai
+    volumes:
+      # Docker login information
+      - /var/jenkins_home/data/docker:/var/jenkins_home/.docker
+      # Map docker cmd on host to container. used for docker image building
+      - /usr/bin/docker:/usr/bin/docker
+      - /var/run/docker.sock:/var/run/docker.sock
+      # .ssh
+      - /var/jenkins_home/jenkins_home/.ssh:/var/jenkins_home/.ssh
+      # Backup
+      - /var/jenkins_home/backup:/var/backup
+      # jenkins home
+      - /var/jenkins_home/jenkins_home:/var/jenkins_home
+      # maven home
+      - /opt/maven:/var/jenkins_home/maven
+      # java home
+      - /opt/java:/var/jenkins_home/java
+    ports:
+      # main port
+      - "80:8080"
+    restart: always
