@@ -1,0 +1,36 @@
+version: '3'
+services:
+  elk:
+    image: 10.1.23.99/library/sebpelk:650
+    container_name: elk
+    restart: always
+    ports:
+      - "5601:5601"
+      - "9200:9200"
+      - "5044:5044"
+    environment:
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - .dockerdata/elk:/var/lib/elasticsearch
+    networks:
+      elk:
+        ipv4_address: 172.25.2.100
+
+  filebeat:
+    image: 10.1.23.99/library/primafilebeat:6.2.3
+    container_name: filebeat
+    restart: always
+    volumes:
+      - ./config/filebeat.yml:/filebeat.yml
+      - ./dockerdata/filebeat:/data
+      - /var/lib/docker/containers:/var/lib/docker/containers
+    networks:
+      elk:
+        ipv4_address: 172.25.2.101
+
+networks:
+  elk:
+    driver: bridge
+    ipam:
+      config:
+       - subnet: 172.25.2.0/24 

@@ -1,0 +1,26 @@
+#filebeat:
+#  prospectors:
+#    - paths:
+#        - /var/log/nginx/access.log
+#      input_type: log
+
+#output:
+#  logstash:
+#    hosts: ["logstash:5044"]
+
+filebeat.inputs:
+- type: log   #定義日誌格式
+  enabled: true
+  paths:
+- /var/log/nginx/*.log   #定義日誌的路徑
+output.elasticsearch:
+  hosts: ["172.25.0.2:9200"]    #定義的es的url
+  username: "elastic"  #定義es的賬號，已做安全連接
+  password: "123456"
+
+output:
+  logstash:
+    hosts: ["logstash:5000"]
+
+setup.kibana: 
+host: "172.25.0.4:5601"   #定義kibana的url

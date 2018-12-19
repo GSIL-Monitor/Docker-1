@@ -1,0 +1,28 @@
+filebeat.prospectors:
+- type: log
+  enabled: true
+  paths:
+    - /var/lib/docker/containers/*/*.log
+  json.keys_under_root: true
+  json.add_error_key: true
+  json.message_key: log
+  tail_files: true
+  multiline.pattern: '^([0-9]{4}|[0-9]{2})-[0-9]{2}' 
+  multiline.negate: true
+  multiline.match: after
+  multiline.timeout: 10s
+#  registry_file: /opt/filebeat/registry
+#-------------------------- Elasticsearch output ------------------------------
+output.elasticsearch:
+  hosts: ["172.25.2.1:9200"]
+
+#==================== Elasticsearch template setting ==========================
+
+setup.template.name: "filebeat.template.json"
+setup.template.fields: "filebeat.template.json"
+setup.template.overwrite: true
+setup.template.enabled: false
+
+processors:
+- drop_fields:
+    fields: ["input_type", "offset", "stream", "beat"]
