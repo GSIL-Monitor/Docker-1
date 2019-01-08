@@ -1,0 +1,228 @@
+#!/bin/bash
+
+. ./tools.sh
+
+# Set sudo
+if [ "$PM" = "apt" ]
+then
+    SUDO="sudo"
+else
+    SUDO=""
+fi
+
+WORKPATH=$PWD
+
+if [ ! -d $WORKPATH/services ]
+then
+    mkdir $WORKPATH/services
+fi
+
+help_info()
+{
+    echo -e "Name:"
+    echo -e "\t$0"
+    echo -e "Program:"
+    echo -e "\t$0 is a shell about docker manage"
+    echo -e "Version:"
+    echo -e "\t1.0.1"
+    echo -e "History:"
+    echo -e "\tCreated on 2018/07/16"
+    echo -e "\tLast modified on 2018/07/19"
+    echo -e "Author:"
+    echo -e "\tkwkw"
+    echo -e "Commands:"
+    echo -e "\tup \t\tUp the container"
+    echo -e "\treup \t\tdocker stop container && docker rm container && up"
+    echo -e "\tps \t\tdocker ps"
+    echo -e "\tpsall \t\tdocker ps -a"
+    echo -e "\tstart \t\tdocker start container"
+    echo -e "\tstartall \tdocker start \`docker ps -a -q\`"
+    echo -e "\tstop \t\tdocker stop container"
+    echo -e "\tstopall \tdocker stop \`docker ps -a -q\`"
+    echo -e "\trestart \tdocker stop container && docker start container"
+    echo -e "\trestartall \tdocker stop \`docker ps -a -q\` && docker start \`docker ps -a -q\`"
+    echo -e "\tlogs \t\tdocker logs -f container"
+    echo -e "\trm \t\tdocker rm container"
+    echo -e "\trmall \t\tdocker rm \`docker ps -a -q\`"
+    echo -e "\tdown \t\tdocker stop container && docker rm container"
+    echo -e "\tdownall \tdocker stop \`docker ps -a -q\` && docker rm \`docker ps -a -q\`"
+    echo -e "\timages \t\tdocker images"
+    echo -e "\trmi \t\tdocker rmi image"
+    echo -e "\trmiall \t\tdocker rmi \`docker images\`"
+    echo -e "\tcleanfile \tClean yml tmp file"
+    echo -e "\tcleandata \tClean data folder"
+    echo -e "\tcleanlogs \tClean logs folder"
+    echo -e "\tcleanall \tClean all"
+    echo -e "\thelp | -h \tHelp info"
+    echo -e "Options:"
+    echo -e "\tx, --xxx \tName of container (command: up)"
+}
+
+up_one()
+{
+    cd $WORKPATH/services
+    DOCKER_COMPOSE_YML_PATH=$WORKPATH/docker-compose.yml
+
+    if [ -f ./$option/docker-compose.yml ]
+    then
+        cat ./$option/docker-compose.yml > $DOCKER_COMPOSE_YML_PATH
+        echo -e "$option will be up"
+        cd $WORKPATH
+        $SUDO docker-compose up -d
+        exit 0
+    fi
+
+    echo -e "$option $option/docker-compose.yml file does not exist"
+    exit 0
+}
+
+up_common_start()
+{
+    case "$option" in
+      "" )
+          echo -e "Please enter a container name\n"
+          exit 0
+          ;;
+      * )
+          up_one
+          exit 0
+          ;;
+    esac
+}
+
+y_or_n()
+{
+    read -p "Are you sure [y/N]:" y_n
+    echo "$y_n"
+    if [ "$y_n" = "y" ] || [ "$y_n" = "Y" ]
+    then
+        :
+    else
+        echo -e "Cancel"
+        exit 0
+    fi
+}
+
+if [ $# -gt 2 ]
+then
+    echo -e "Too many parameters\n"
+    help_info
+    exit 0
+elif [ $# -lt 1 ]
+then
+    echo -e "No parameters\n"
+    help_info
+    exit 0
+fi
+
+option="$2"
+case "$1" in
+  "up" )
+      up_common_start
+      ;;
+  "reup" )
+      y_or_n
+      y_or_n
+      y_or_n
+      $SUDO docker stop "$option" && $SUDO docker rm "$option" && up_common_start
+      ;;
+  "ps" )
+      $SUDO docker ps -a
+      ;;
+  "psall" )
+      $SUDO docker ps
+      ;;
+  "start" )
+      $SUDO docker start "$option"
+      ;;
+  "startall" )
+      $SUDO docker start `$SUDO docker ps -a -q`
+      ;;
+  "stop" )
+      $SUDO docker stop "$option"
+      ;;
+  "stopall" )
+      $SUDO docker stop `$SUDO docker ps -a -q`
+      ;;
+  "restart" )
+      $SUDO docker stop "$option" && docker start "$option"
+      ;;
+  "restartall" )
+      $SUDO docker stop `$SUDO docker ps -a -q` && $SUDO docker start `$SUDO docker ps -a -q`
+      ;;
+  "logs" )
+      $SUDO docker logs -f "$option"
+      ;;
+  "rm" )
+      y_or_n
+      y_or_n
+      y_or_n
+      $SUDO docker rm "$option"
+      ;;
+  "rmall" )
+      y_or_n
+      y_or_n
+      y_or_n
+      $SUDO docker rm `$SUDO docker ps -a -q`
+      ;;
+  "down" )
+      y_or_n
+      y_or_n
+      y_or_n
+      $SUDO docker stop "$option" && $SUDO docker rm "$option"
+      ;;
+  "downall" )
+      y_or_n
+      y_or_n
+      y_or_n
+      $SUDO docker stop `$SUDO docker ps -a -q` && $SUDO docker rm `$SUDO docker ps -a -q`
+      ;;
+  "images" )
+      $SUDO docker images
+      ;;
+  "rmi" )
+      y_or_n
+      y_or_n
+      y_or_n
+      $SUDO docker rmi "$option"
+      ;;
+  "rmiall" )
+      y_or_n
+      y_or_n
+      y_or_n
+      $SUDO docker rmi `$SUDO docker images`
+      ;;
+  "cleanfile" )
+      y_or_n
+      y_or_n
+      y_or_n
+      rm -rf $WORKPATH/docker-compose.yml
+      ;;
+  "cleandata" )
+      y_or_n
+      y_or_n
+      y_or_n
+      $SUDO rm -rf ../data/*
+      ;;
+  "cleanlogs" )
+      y_or_n
+      y_or_n
+      y_or_n
+      $SUDO rm -rf ../logs/*
+      ;;
+  "cleanall" )
+      y_or_n
+      y_or_n
+      y_or_n
+      rm -rf $WORKPATH/docker-compose.yml
+      $SUDO rm -rf ../data/*
+      $SUDO rm -rf ../logs/*
+      ;;
+  "help" | "-h" )
+      help_info
+      ;;
+  * )
+      echo -e "Error command\n"
+      help_info
+      ;;
+esac
